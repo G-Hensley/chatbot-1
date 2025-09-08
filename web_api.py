@@ -414,6 +414,9 @@ async def chat_endpoint(
     """
     global chatbot
     
+    # Start timing at the very beginning
+    start_time = time.time()
+    
     if not chatbot:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -434,8 +437,6 @@ async def chat_endpoint(
             timestamp=time.time(),
             processing_time=processing_time
         )
-    
-    start_time = time.time()
     
     try:
         # Generate conversation ID if not provided
