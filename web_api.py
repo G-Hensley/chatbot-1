@@ -265,9 +265,6 @@ async def setup_instructions():
     
     return setup_info
 
-        }
-    }
-
 @app.get("/api/v1/setup")
 async def setup_instructions():
     """Provide setup instructions for configuring Ollama."""
