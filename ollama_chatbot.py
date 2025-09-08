@@ -10,7 +10,7 @@ import os
 from dataset_manager import PortfolioDatasetManager
 
 class OllamaPortfolioChatbot:
-    def __init__(self, model_name="llama3.2:1b", ollama_url=None):
+    def __init__(self, model_name="tinyllama", ollama_url=None):
         self.model_name = model_name
         
         # Smart URL detection

@@ -25,30 +25,33 @@ COPY . .
 
 # Create startup script that runs both Ollama and FastAPI
 RUN echo '#!/bin/bash\n\
-# Set memory limits for Ollama\n\
+# Set strict memory limits for Ollama\n\
 export OLLAMA_MAX_LOADED_MODELS=1\n\
 export OLLAMA_NUM_PARALLEL=1\n\
+export OLLAMA_FLASH_ATTENTION=1\n\
+export OLLAMA_HOST=0.0.0.0:11434\n\
+export OLLAMA_KEEP_ALIVE=5m\n\
 \n\
-# Start Ollama in background\n\
-ollama serve &\n\
+# Start Ollama in background with lower priority\n\
+nice -n 10 ollama serve &\n\
 OLLAMA_PID=$!\n\
 \n\
 # Wait for Ollama to start\n\
 echo "Waiting for Ollama to start..."\n\
-sleep 15\n\
+sleep 20\n\
 \n\
-# Check if Ollama is still running\n\
+# Check if Ollama is still running and try to pull smaller model\n\
 if kill -0 $OLLAMA_PID 2>/dev/null; then\n\
-    echo "Ollama is running, pulling model..."\n\
-    # Use smaller, more efficient model\n\
-    ollama pull llama3.2:1b\n\
-    echo "Model pulled successfully"\n\
+    echo "Ollama is running, pulling ultra-light model..."\n\
+    # Try even smaller model - tinyllama is very lightweight\n\
+    timeout 120 ollama pull tinyllama || echo "Model pull failed or timed out, continuing..."\n\
+    echo "Model setup complete or skipped"\n\
 else\n\
-    echo "Ollama failed to start, continuing without it..."\n\
+    echo "Ollama failed to start, API will run in degraded mode..."\n\
 fi\n\
 \n\
 # Start FastAPI with virtual environment\n\
-exec /opt/venv/bin/uvicorn web_api:app --host 0.0.0.0 --port ${PORT:-8000}\n\
+exec /opt/venv/bin/uvicorn web_api:app --host 0.0.0.0 --port ${PORT:-8080} --workers 1\n\
 ' > /app/start.sh && chmod +x /app/start.sh
 
 # Expose port

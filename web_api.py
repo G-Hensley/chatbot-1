@@ -30,10 +30,50 @@ RATE_LIMIT_WINDOW = int(os.getenv("RATE_LIMIT_WINDOW", "60"))     # seconds
 
 # Railway environment detection
 IS_RAILWAY = os.getenv("RAILWAY_ENVIRONMENT") == "production"
-PORT = int(os.getenv("PORT", "8000"))
+PORT = int(os.getenv("PORT", "8080"))
 
 # Rate limiting storage
 rate_limit_storage = defaultdict(lambda: deque())
+
+def get_fallback_response(message: str) -> str:
+    """Provide helpful fallback responses when Ollama is unavailable."""
+    message_lower = message.lower()
+    
+    # Determine response based on message content
+    if any(word in message_lower for word in ["brenda", "about", "experience", "background"]):
+        return """I'm The Intersect, Brenda Hensley's AI knowledge database. While my full AI capabilities are temporarily unavailable, I can tell you that Brenda is an AppSec Engineer specializing in cybersecurity. 
+
+For detailed information about her experience, services, and background, please visit:
+🌐 Website: https://tampertantrumlabs.com
+📧 Email: hensley.brenda@protonmail.com
+
+I'll be back to full functionality shortly!"""
+    
+    elif any(word in message_lower for word in ["services", "offer", "business", "tampertantrum"]):
+        return """TamperTantrum Labs offers comprehensive cybersecurity services including:
+• Application Security Engineering
+• Security Assessments & Penetration Testing
+• Cybersecurity Consulting
+
+While my AI processing is temporarily offline, you can get full details at:
+🌐 https://tampertantrumlabs.com
+📧 hensley.brenda@protonmail.com"""
+    
+    elif any(word in message_lower for word in ["contact", "email", "reach", "connect"]):
+        return """You can reach Brenda Hensley at:
+📧 hensley.brenda@protonmail.com
+🌐 https://tampertantrumlabs.com
+
+I'm The Intersect - Brenda's AI assistant. I'm experiencing technical difficulties right now, but I'll be back soon with full conversational capabilities!"""
+    
+    else:
+        return """Hello! I'm The Intersect, Brenda Hensley's AI knowledge database. I'm currently experiencing technical difficulties with my AI processing, but I can still help you with basic information.
+
+Brenda is a cybersecurity expert specializing in AppSec Engineering. For detailed information, please visit:
+🌐 https://tampertantrumlabs.com
+📧 hensley.brenda@protonmail.com
+
+I should be back to full functionality shortly. Thank you for your patience!"""
 
 # Initialize chatbot globally
 chatbot = None
@@ -382,9 +422,16 @@ async def chat_endpoint(
     # Check Ollama connection before processing
     connected, message = chatbot.check_ollama_connection()
     if not connected:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Ollama not available: {message}. Please check your Ollama configuration."
+        # Provide fallback response when Ollama is unavailable
+        fallback_response = get_fallback_response(request.message)
+        
+        processing_time = time.time() - start_time
+        
+        return ChatResponse(
+            response=fallback_response,
+            conversation_id=request.conversation_id or "fallback",
+            timestamp=time.time(),
+            processing_time=processing_time
         )
     
     start_time = time.time()
@@ -483,7 +530,7 @@ if __name__ == "__main__":
     import uvicorn
     
     # Use Railway's port or default to 8000
-    port = int(os.getenv("PORT", "8000"))
+    port = int(os.getenv("PORT", "8080"))
     host = "0.0.0.0"
     
     print("🤖 Starting The Intersect API Server...")
