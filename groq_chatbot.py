@@ -15,8 +15,11 @@ class GroqPortfolioChatbot:
         if api_key is None:
             api_key = os.getenv("GROQ_API_KEY")
         
+        print(f"Initializing Groq chatbot with API key: {'***' + api_key[-4:] if api_key and len(api_key) > 4 else 'None'}")
+        
         if not api_key:
             # Don't raise exception - let the app start and handle gracefully
+            print("No GROQ_API_KEY found, initializing in degraded mode")
             self.client = None
             self.api_key_missing = True
             self.dataset_manager = PortfolioDatasetManager()
@@ -24,12 +27,15 @@ class GroqPortfolioChatbot:
             return
         
         try:
+            print("Creating Groq client...")
             self.client = Groq(api_key=api_key)
             self.api_key_missing = False
             self.dataset_manager = PortfolioDatasetManager()
             self.system_prompt = self.create_system_prompt()
+            print("Groq client created successfully")
         except Exception as e:
             # If Groq client creation fails, set to None and handle gracefully
+            print(f"Failed to create Groq client: {str(e)}")
             self.client = None
             self.api_key_missing = True
             self.dataset_manager = PortfolioDatasetManager()
@@ -73,6 +79,7 @@ Remember: You represent a cybersecurity professional, so maintain that expertise
         
         try:
             # Make a simple test request
+            print(f"Testing Groq connection with model: {self.model_name}")
             response = self.client.chat.completions.create(
                 model=self.model_name,
                 messages=[
@@ -82,8 +89,10 @@ Remember: You represent a cybersecurity professional, so maintain that expertise
                 max_tokens=10,
                 timeout=10
             )
+            print(f"Groq test successful: {response.choices[0].message.content}")
             return True, "Connected"
         except Exception as e:
+            print(f"Groq connection error: {str(e)}")
             return False, f"Error: {str(e)}"
     
     def chat_with_groq(self, user_message, conversation_history=None):
