@@ -1,30 +1,5 @@
-# All-in-One Dockerfile f# Create startup script that runs both Ollama and FastAPI
-RUN echo '#!/bin/bash\n\
-# Set memory limits for Ollama\n\
-export OLLAMA_MAX_LOADED_MODELS=1\n\
-export OLLAMA_NUM_PARALLEL=1\n\
-\n\
-# Start Ollama in background\n\
-ollama serve &\n\
-OLLAMA_PID=$!\n\
-\n\
-# Wait for Ollama to start\n\
-echo "Waiting for Ollama to start..."\n\
-sleep 15\n\
-\n\
-# Check if Ollama is still running\n\
-if kill -0 $OLLAMA_PID 2>/dev/null; then\n\
-    echo "Ollama is running, pulling model..."\n\
-    # Use smaller, more efficient model\n\
-    ollama pull llama3.2:1b\n\
-    echo "Model pulled successfully"\n\
-else\n\
-    echo "Ollama failed to start, continuing without it..."\n\
-fi\n\
-\n\
-# Start FastAPI with virtual environment\n\
-exec /opt/venv/bin/uvicorn web_api:app --host 0.0.0.0 --port ${PORT:-8000}\n\
-' > /app/start.sh && chmod +x /app/start.shncludes both FastAPI and Ollama in one container
+# All-in-One Dockerfile for Railway
+# Includes both FastAPI and Ollama in one container
 
 FROM ollama/ollama:latest
 
@@ -50,15 +25,27 @@ COPY . .
 
 # Create startup script that runs both Ollama and FastAPI
 RUN echo '#!/bin/bash\n\
+# Set memory limits for Ollama\n\
+export OLLAMA_MAX_LOADED_MODELS=1\n\
+export OLLAMA_NUM_PARALLEL=1\n\
+\n\
 # Start Ollama in background\n\
 ollama serve &\n\
+OLLAMA_PID=$!\n\
 \n\
-# Wait for Ollama to be ready\n\
+# Wait for Ollama to start\n\
 echo "Waiting for Ollama to start..."\n\
-sleep 10\n\
+sleep 15\n\
 \n\
-# Pull the model\n\
-ollama pull llama3.1\n\
+# Check if Ollama is still running\n\
+if kill -0 $OLLAMA_PID 2>/dev/null; then\n\
+    echo "Ollama is running, pulling model..."\n\
+    # Use smaller, more efficient model\n\
+    ollama pull llama3.2:1b\n\
+    echo "Model pulled successfully"\n\
+else\n\
+    echo "Ollama failed to start, continuing without it..."\n\
+fi\n\
 \n\
 # Start FastAPI with virtual environment\n\
 exec /opt/venv/bin/uvicorn web_api:app --host 0.0.0.0 --port ${PORT:-8000}\n\
