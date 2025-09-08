@@ -451,6 +451,19 @@ async def chat_endpoint(
         # Get response from chatbot
         response = chatbot.chat_with_ollama(request.message, conversation_history)
         
+        # Check for special error flags and provide fallback
+        if response in ["TIMEOUT_ERROR", "CONNECTION_ERROR"]:
+            logger.warning(f"Ollama {response.lower()} for IP: {client_request.client.host}")
+            fallback_response = get_fallback_response(request.message)
+            processing_time = time.time() - start_time
+            
+            return ChatResponse(
+                response=fallback_response + "\n\n⚠️ Note: AI system is currently overloaded. Providing basic information instead.",
+                conversation_id=request.conversation_id or "ai_fallback",
+                timestamp=time.time(),
+                processing_time=processing_time
+            )
+        
         # Update conversation history
         conversation_history.append({"role": "user", "content": request.message})
         conversation_history.append({"role": "assistant", "content": response})

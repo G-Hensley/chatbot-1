@@ -106,6 +106,10 @@ INSTRUCTIONS:
             else:
                 return f"Error: {response.status_code} - {response.text}"
                 
+        except requests.exceptions.Timeout:
+            return "TIMEOUT_ERROR"  # Special flag for timeout
+        except requests.exceptions.ConnectionError:
+            return "CONNECTION_ERROR"  # Special flag for connection issues
         except Exception as e:
             return f"Error communicating with Ollama: {str(e)}"
     
