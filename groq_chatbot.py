@@ -16,11 +16,24 @@ class GroqPortfolioChatbot:
             api_key = os.getenv("GROQ_API_KEY")
         
         if not api_key:
-            raise ValueError("GROQ_API_KEY environment variable must be set or api_key parameter provided")
+            # Don't raise exception - let the app start and handle gracefully
+            self.client = None
+            self.api_key_missing = True
+            self.dataset_manager = PortfolioDatasetManager()
+            self.system_prompt = self.create_system_prompt()
+            return
         
-        self.client = Groq(api_key=api_key)
-        self.dataset_manager = PortfolioDatasetManager()
-        self.system_prompt = self.create_system_prompt()
+        try:
+            self.client = Groq(api_key=api_key)
+            self.api_key_missing = False
+            self.dataset_manager = PortfolioDatasetManager()
+            self.system_prompt = self.create_system_prompt()
+        except Exception as e:
+            # If Groq client creation fails, set to None and handle gracefully
+            self.client = None
+            self.api_key_missing = True
+            self.dataset_manager = PortfolioDatasetManager()
+            self.system_prompt = self.create_system_prompt()
         
     def create_system_prompt(self):
         """Create a system prompt with Brenda's information."""
@@ -52,6 +65,12 @@ Remember: You represent a cybersecurity professional, so maintain that expertise
     
     def check_connection(self):
         """Check if Groq API is accessible."""
+        if hasattr(self, 'api_key_missing') and self.api_key_missing:
+            return False, "GROQ_API_KEY environment variable not set"
+        
+        if not self.client:
+            return False, "Groq client not initialized"
+        
         try:
             # Make a simple test request
             response = self.client.chat.completions.create(
@@ -71,6 +90,9 @@ Remember: You represent a cybersecurity professional, so maintain that expertise
         """Send a message to Groq and get a response."""
         if conversation_history is None:
             conversation_history = []
+        
+        if not self.client:
+            return "GROQ_ERROR: API key not configured"
         
         # Prepare the conversation for Groq
         messages = [{"role": "system", "content": self.system_prompt}]
