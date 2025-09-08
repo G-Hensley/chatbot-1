@@ -2,3 +2,10 @@ requests>=2.28.0
 datasets>=2.0.0
 transformers>=4.20.0
 torch>=1.12.0
+
+# FastAPI Web Server Dependencies
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+pydantic>=2.4.0
+python-multipart>=0.0.6
+python-dotenv>=1.0.0
