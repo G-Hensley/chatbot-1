@@ -1,0 +1,6 @@
+# Nixpacks configuration for Railway
+# Simplified configuration that works with Railway's Nixpacks
+
+[variables]
+PYTHONPATH = "/app"
+PYTHONUNBUFFERED = "1"
