@@ -1,0 +1,149 @@
+"""
+Groq Portfolio Chatbot
+Fast, reliable chatbot using Groq's lightning-fast inference API
+"""
+
+import os
+from groq import Groq
+from dataset_manager import PortfolioDatasetManager
+
+class GroqPortfolioChatbot:
+    def __init__(self, model_name="llama-3.1-8b-instant", api_key=None):
+        self.model_name = model_name
+        
+        # Get API key from environment or parameter
+        if api_key is None:
+            api_key = os.getenv("GROQ_API_KEY")
+        
+        if not api_key:
+            raise ValueError("GROQ_API_KEY environment variable must be set or api_key parameter provided")
+        
+        self.client = Groq(api_key=api_key)
+        self.dataset_manager = PortfolioDatasetManager()
+        self.system_prompt = self.create_system_prompt()
+        
+    def create_system_prompt(self):
+        """Create a system prompt with Brenda's information."""
+        
+        # Get all conversations from dataset
+        conversations = self.dataset_manager.data["conversations"]
+        
+        # Create knowledge base from conversations
+        knowledge_base = "You are a helpful assistant representing Brenda Hensley, an AppSec Engineer. Here's what you know about her:\\n\\n"
+        
+        for conv in conversations:
+            knowledge_base += f"Q: {conv['input']}\\nA: {conv['output']}\\n\\n"
+        
+        system_prompt = f"""{knowledge_base}
+
+INSTRUCTIONS:
+- You are "The Intersect" - Brenda Hensley's AI knowledge database and digital assistant
+- Use the information above to answer questions about Brenda's background, skills, services, and experience
+- Speak AS The Intersect (an AI system), not as Brenda herself
+- Keep responses conversational, helpful, and slightly tech-savvy
+- If asked about something not in your knowledge base, politely redirect to Brenda's business website (https://tampertantrumlabs.com) or email (hensley.brenda@protonmail.com)
+- Don't make up information that isn't provided above
+- Occasionally reference being an "AI knowledge database" or "information system"
+- Be professional but friendly, with a cybersecurity edge
+
+Remember: You represent a cybersecurity professional, so maintain that expertise and confidence in your responses."""
+
+        return system_prompt
+    
+    def check_connection(self):
+        """Check if Groq API is accessible."""
+        try:
+            # Make a simple test request
+            response = self.client.chat.completions.create(
+                model=self.model_name,
+                messages=[
+                    {"role": "system", "content": "You are a test assistant."},
+                    {"role": "user", "content": "Hello"}
+                ],
+                max_tokens=10,
+                timeout=10
+            )
+            return True, "Connected"
+        except Exception as e:
+            return False, f"Error: {str(e)}"
+    
+    def chat_with_groq(self, user_message, conversation_history=None):
+        """Send a message to Groq and get a response."""
+        if conversation_history is None:
+            conversation_history = []
+        
+        # Prepare the conversation for Groq
+        messages = [{"role": "system", "content": self.system_prompt}]
+        
+        # Add conversation history
+        for msg in conversation_history:
+            messages.append(msg)
+        
+        # Add current user message
+        messages.append({"role": "user", "content": user_message})
+        
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model_name,
+                messages=messages,
+                max_tokens=1000,  # Reasonable limit
+                temperature=0.7,  # Balanced creativity
+                timeout=30
+            )
+            
+            return response.choices[0].message.content
+            
+        except Exception as e:
+            return f"GROQ_ERROR: {str(e)}"
+
+    def interactive_chat(self):
+        """Start an interactive chat session."""
+        
+        print("🤖 The Intersect - Brenda's AI Knowledge Database (Powered by Groq)")
+        print("=" * 60)
+        
+        # Check Groq connection
+        connected, message = self.check_connection()
+        if not connected:
+            print(f"❌ Groq connection failed: {message}")
+            print("Please check your GROQ_API_KEY environment variable.")
+            return
+        
+        print("✅ Connected to Groq!")
+        print("💬 Start chatting! (Type 'quit' to exit)")
+        print("-" * 60)
+        
+        conversation_history = []
+        
+        while True:
+            user_input = input("\\n🧑 You: ").strip()
+            
+            if user_input.lower() in ['quit', 'exit', 'bye']:
+                print("\\n👋 Thanks for chatting with The Intersect!")
+                break
+            
+            if not user_input:
+                continue
+            
+            print("\\n🤖 The Intersect: ", end="", flush=True)
+            response = self.chat_with_groq(user_input, conversation_history)
+            print(response)
+            
+            # Update conversation history
+            conversation_history.append({"role": "user", "content": user_input})
+            conversation_history.append({"role": "assistant", "content": response})
+            
+            # Keep conversation history manageable
+            if len(conversation_history) > 20:
+                conversation_history = conversation_history[-20:]
+
+def main():
+    """Main function to run the chatbot."""
+    try:
+        chatbot = GroqPortfolioChatbot()
+        chatbot.interactive_chat()
+    except Exception as e:
+        print(f"Error initializing chatbot: {e}")
+
+if __name__ == "__main__":
+    main()

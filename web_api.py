@@ -18,7 +18,7 @@ import asyncio
 from contextlib import asynccontextmanager
 import logging
 
-from ollama_chatbot import OllamaPortfolioChatbot
+from groq_chatbot import GroqPortfolioChatbot
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -37,7 +37,7 @@ PORT = int(os.getenv("PORT", "8080"))
 rate_limit_storage = defaultdict(lambda: deque())
 
 def get_fallback_response(message: str) -> str:
-    """Provide helpful fallback responses when Ollama is unavailable."""
+    """Provide helpful fallback responses when Groq is unavailable."""
     message_lower = message.lower()
     
     # Determine response based on message content
@@ -86,12 +86,12 @@ async def lifespan(app: FastAPI):
     logger.info("🚀 Starting The Intersect API...")
     
     try:
-        chatbot = OllamaPortfolioChatbot()
-        connected, message = chatbot.check_ollama_connection()
+        chatbot = GroqPortfolioChatbot()
+        connected, message = chatbot.check_connection()
         
         if not connected:
-            logger.warning(f"⚠️ Ollama connection failed: {message}")
-            logger.info("🔄 API will start without Ollama. Configure OLLAMA_URL environment variable.")
+            logger.warning(f"⚠️ Groq connection failed: {message}")
+            logger.info("🔄 API will start without Groq. Configure GROQ_API_KEY environment variable.")
             # Don't raise exception - let API start and show helpful error messages
         else:
             logger.info(f"✅ Connected to Ollama with model: {chatbot.model_name}")
@@ -229,7 +229,7 @@ async def root():
             "instructions": "Visit /api/v1/setup for configuration help"
         }
     
-    connected, message = chatbot.check_ollama_connection()
+    connected, message = chatbot.check_connection()
     
     return {
         "name": "The Intersect - Portfolio Chatbot API",
@@ -297,7 +297,7 @@ async def setup_instructions():
     }
     
     if chatbot:
-        connected, message = chatbot.check_ollama_connection()
+        connected, message = chatbot.check_connection()
         setup_info["connection_test"] = {
             "connected": connected,
             "message": message,
@@ -359,7 +359,7 @@ async def setup_instructions():
     }
     
     if chatbot:
-        connected, message = chatbot.check_ollama_connection()
+        connected, message = chatbot.check_connection()
         setup_info["connection_test"] = {
             "connected": connected,
             "message": message,
@@ -382,7 +382,7 @@ async def health_check():
             uptime=time.time()
         )
     
-    connected, message = chatbot.check_ollama_connection()
+    connected, message = chatbot.check_connection()
     
     if not connected:
         return HealthResponse(
@@ -421,7 +421,7 @@ async def chat_endpoint(
         )
     
     # Check Ollama connection before processing
-    connected, message = chatbot.check_ollama_connection()
+    connected, message = chatbot.check_connection()
     if not connected:
         # Provide fallback response when Ollama is unavailable
         fallback_response = get_fallback_response(request.message)
@@ -449,16 +449,16 @@ async def chat_endpoint(
         conversation_history = conversations.get(conversation_id, [])
         
         # Get response from chatbot
-        response = chatbot.chat_with_ollama(request.message, conversation_history)
+        response = chatbot.chat_with_groq(request.message, conversation_history)
         
         # Check for special error flags and provide fallback
-        if response in ["TIMEOUT_ERROR", "CONNECTION_ERROR"]:
-            logger.warning(f"Ollama {response.lower()} for IP: {client_request.client.host}")
+        if response.startswith("GROQ_ERROR:"):
+            logger.warning(f"Groq error for IP: {client_request.client.host} - {response}")
             fallback_response = get_fallback_response(request.message)
             processing_time = time.time() - start_time
             
             return ChatResponse(
-                response=fallback_response + "\n\n⚠️ Note: AI system is currently overloaded. Providing basic information instead.",
+                response=fallback_response + "\n\n⚠️ Note: AI system is temporarily unavailable. Providing basic information instead.",
                 conversation_id=request.conversation_id or "ai_fallback",
                 timestamp=time.time(),
                 processing_time=processing_time
