@@ -6,9 +6,12 @@ FROM python:3.11-slim
 # Set working directory
 WORKDIR /app
 
-# Copy requirements and install
+# Update pip and install dependencies with no cache
+RUN pip install --upgrade pip
+
+# Copy requirements and install with no cache and upgrade all
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
 # Copy application code
 COPY . .
