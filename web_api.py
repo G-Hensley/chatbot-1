@@ -49,15 +49,17 @@ async def lifespan(app: FastAPI):
         connected, message = chatbot.check_ollama_connection()
         
         if not connected:
-            logger.error(f"❌ Ollama connection failed: {message}")
-            raise Exception(f"Ollama not available: {message}")
-        
-        logger.info(f"✅ Connected to Ollama with model: {chatbot.model_name}")
-        logger.info(f"📊 Loaded {len(chatbot.dataset_manager.data['conversations'])} knowledge entries")
+            logger.warning(f"⚠️ Ollama connection failed: {message}")
+            logger.info("🔄 API will start without Ollama. Configure OLLAMA_URL environment variable.")
+            # Don't raise exception - let API start and show helpful error messages
+        else:
+            logger.info(f"✅ Connected to Ollama with model: {chatbot.model_name}")
+            logger.info(f"📊 Loaded {len(chatbot.dataset_manager.data['conversations'])} knowledge entries")
         
     except Exception as e:
-        logger.error(f"❌ Failed to initialize chatbot: {str(e)}")
-        raise
+        logger.warning(f"⚠️ Failed to initialize chatbot: {str(e)}")
+        logger.info("🔄 API starting in degraded mode. Check Ollama configuration.")
+        chatbot = None  # Set to None so we can handle it gracefully
     
     yield
     
@@ -169,16 +171,99 @@ conversations = {}
 @app.get("/", response_model=dict)
 async def root():
     """Root endpoint with API information."""
+    global chatbot
+    
+    if not chatbot:
+        return {
+            "name": "The Intersect - Portfolio Chatbot API",
+            "description": "Brenda Hensley's AI knowledge database",
+            "version": "1.0.0",
+            "status": "⚠️ OLLAMA NOT CONFIGURED",
+            "setup_required": "Please set OLLAMA_URL environment variable and ensure Ollama is running",
+            "endpoints": {
+                "health": "/api/v1/health",
+                "setup": "/api/v1/setup",
+                "docs": "/docs"
+            },
+            "instructions": "Visit /api/v1/setup for configuration help"
+        }
+    
+    connected, message = chatbot.check_ollama_connection()
+    
     return {
         "name": "The Intersect - Portfolio Chatbot API",
         "description": "Secure API for Brenda Hensley's AI knowledge database",
         "version": "1.0.0",
+        "status": "✅ READY" if connected else f"⚠️ OLLAMA ISSUE: {message}",
         "endpoints": {
             "chat": "/api/v1/chat",
             "health": "/api/v1/health",
+            "stats": "/api/v1/stats",
             "docs": "/docs"
         }
     }
+
+@app.get("/api/v1/setup")
+async def setup_instructions():
+    """Provide setup instructions for configuring Ollama."""
+    global chatbot
+    
+    ollama_url = os.getenv("OLLAMA_URL", "not_set")
+    ollama_model = os.getenv("OLLAMA_MODEL", "llama3.1")
+    
+    setup_info = {
+        "title": "🚀 The Intersect API Setup Instructions",
+        "current_config": {
+            "OLLAMA_URL": ollama_url,
+            "OLLAMA_MODEL": ollama_model,
+            "chatbot_initialized": chatbot is not None
+        },
+        "steps": [
+            {
+                "step": 1,
+                "title": "Set Environment Variables in Railway",
+                "variables": {
+                    "OLLAMA_URL": "https://your-ollama-instance.railway.app (or external URL)",
+                    "OLLAMA_MODEL": "llama3.1",
+                    "INTERSECT_API_KEY": "your-secure-api-key",
+                    "ALLOWED_ORIGINS": "https://tampertantrumlabs.com"
+                }
+            },
+            {
+                "step": 2, 
+                "title": "Deploy Ollama Service",
+                "options": [
+                    "Option A: Create new Railway service with ollama/ollama:latest image",
+                    "Option B: Use external Ollama server (DigitalOcean, AWS, etc.)",
+                    "Option C: Use local Ollama for development"
+                ]
+            },
+            {
+                "step": 3,
+                "title": "Pull Model in Ollama",
+                "command": f"ollama pull {ollama_model}"
+            },
+            {
+                "step": 4,
+                "title": "Restart Railway Service",
+                "note": "After setting environment variables, redeploy this service"
+            }
+        ],
+        "test_endpoints": {
+            "health": "/api/v1/health",
+            "documentation": "/docs"
+        }
+    }
+    
+    if chatbot:
+        connected, message = chatbot.check_ollama_connection()
+        setup_info["connection_test"] = {
+            "connected": connected,
+            "message": message,
+            "status": "✅ Ready!" if connected else f"❌ {message}"
+        }
+    
+    return setup_info
 
 @app.get("/api/v1/health", response_model=HealthResponse)
 async def health_check():
@@ -186,17 +271,22 @@ async def health_check():
     global chatbot
     
     if not chatbot:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Chatbot not initialized"
+        # Return helpful information even when Ollama isn't connected
+        return HealthResponse(
+            status="degraded",
+            model="not_connected", 
+            dataset_size=0,
+            uptime=time.time()
         )
     
     connected, message = chatbot.check_ollama_connection()
     
     if not connected:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Ollama not available: {message}"
+        return HealthResponse(
+            status="degraded",
+            model=f"error: {message}",
+            dataset_size=len(chatbot.dataset_manager.data['conversations']) if chatbot.dataset_manager else 0,
+            uptime=time.time()
         )
     
     return HealthResponse(
@@ -224,7 +314,15 @@ async def chat_endpoint(
     if not chatbot:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Chatbot service unavailable"
+            detail="Chatbot service unavailable. Please configure OLLAMA_URL environment variable and ensure Ollama is running."
+        )
+    
+    # Check Ollama connection before processing
+    connected, message = chatbot.check_ollama_connection()
+    if not connected:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Ollama not available: {message}. Please check your Ollama configuration."
         )
     
     start_time = time.time()
