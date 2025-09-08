@@ -1,103 +1,134 @@
-# Brenda's Portfolio Chatbot
+# The Intersect - Brenda's Portfolio Chatbot API
 
-A chatbot trained on Brenda Hensley's portfolio information, designed to answer questions about her background, skills, and services.
+A production-ready FastAPI chatbot service powered by Ollama, designed to answer questions about Brenda Hensley's cybersecurity expertise and services.
 
-## Quick Start with Ollama
+## 🚀 Live Deployment
 
-### 1. Install Dependencies
+This chatbot is deployed on Railway and ready for website integration.
+
+**API Endpoints:**
+- Health Check: `GET /api/v1/health`
+- Chat: `POST /api/v1/chat`
+- Documentation: `GET /docs`
+
+## 📁 Project Structure
+
+```
+├── web_api.py              # Main FastAPI application
+├── ollama_chatbot.py       # Core chatbot logic with Ollama integration
+├── dataset_manager.py      # Portfolio data management
+├── portfolio_dataset.json  # Brenda's knowledge base (30 conversations)
+├── requirements.txt        # Python dependencies
+├── railway.toml           # Railway deployment configuration
+├── nixpacks.toml          # Build optimization for Railway
+├── .railwayignore         # Files excluded from deployment
+└── README.md              # This file
+```
+
+## 🤖 The Intersect Features
+
+- **AI Persona**: "The Intersect" - Brenda's AI knowledge database
+- **Portfolio Information**: Background, skills, certifications, services
+- **CTF Easter Eggs**: Hidden challenges and personality traits
+- **Security Focus**: Application security expertise and TamperTantrum Labs
+- **Professional Tone**: Tech-savvy but approachable responses
+
+## 🔌 API Usage
+
+### Chat Endpoint
 ```bash
+POST /api/v1/chat
+Content-Type: application/json
+
+{
+  "message": "Tell me about Brenda's cybersecurity experience",
+  "conversation_id": "optional-for-context"
+}
+```
+
+### Response
+```json
+{
+  "response": "Brenda has 1 year of professional AppSec experience...",
+  "conversation_id": "abc123",
+  "timestamp": 1694123456.789,
+  "processing_time": 2.34
+}
+```
+
+## 🌐 Website Integration
+
+```javascript
+// Simple fetch example
+const response = await fetch('https://your-api-url.railway.app/api/v1/chat', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({message: 'What are your main skills?'})
+});
+
+const data = await response.json();
+console.log(data.response);
+```
+
+## 🛠️ Local Development
+
+```bash
+# Install dependencies
 pip install -r requirements.txt
+
+# Start the API server
+python web_api.py
+
+# API will be available at http://localhost:8000
 ```
 
-### 2. Setup Ollama
-```bash
-python setup_ollama.py
-```
+## 🚂 Railway Deployment
 
-This will:
-- Check if Ollama is installed
-- Start the Ollama service
-- Download the llama3.1 model
-- Test the connection
+This project is optimized for Railway deployment:
 
-### 3. Start Chatting
-```bash
-python ollama_chatbot.py
-```
-
-## Manual Ollama Setup
-
-If the automatic setup doesn't work:
-
-1. **Install Ollama**
-   - Visit: https://ollama.ai
-   - Download and install for your OS
-
-2. **Start Ollama Service**
-   ```bash
-   ollama serve
+1. **Connect GitHub repo** to Railway
+2. **Set environment variables**:
    ```
-
-3. **Pull a Model**
-   ```bash
-   ollama pull llama3.1
+   INTERSECT_API_KEY=your-secure-api-key
+   OLLAMA_URL=your-ollama-instance-url
+   OLLAMA_MODEL=llama3.1
+   ALLOWED_ORIGINS=https://yourdomain.com
    ```
+3. **Deploy** - builds in 2-3 minutes with Nixpacks
 
-4. **Run the Chatbot**
-   ```bash
-   python ollama_chatbot.py
-   ```
+## 📊 Dataset Information
 
-## Alternative Models
+- **30 total conversations** covering comprehensive topics
+- **Categories**: Introduction, skills, services, certifications, experience, CTF hints
+- **Optimized responses** for natural conversation flow
+- **Easter eggs** for engagement and personality
 
-You can use different models by editing `ollama_chatbot.py`:
+## 🔒 Security Features
 
-```python
-# Popular options:
-chatbot = OllamaPortfolioChatbot(model_name="llama3.1")      # Default
-chatbot = OllamaPortfolioChatbot(model_name="llama2")        # Smaller
-chatbot = OllamaPortfolioChatbot(model_name="mistral")       # Fast
-chatbot = OllamaPortfolioChatbot(model_name="codellama")     # Code-focused
-```
+- Rate limiting (configurable per IP)
+- CORS protection for website integration
+- Optional API key authentication
+- Input validation and sanitization
+- Comprehensive error handling
 
-## Dataset Information
+## 🎯 Key Topics Covered
 
-- **Total Conversations**: 31
-- **Categories**: Background, skills, services, certifications, experience, and more
-- **Format**: JSON with question-answer pairs
-
-### Key Topics Covered:
-- Early tech curiosity and background
-- Educational journey (6-month degree while pregnant)
-- Certifications (Security+, CySA+, PenTest+, etc.)
-- Motherhood and career balance
-- Application security expertise
+- Cybersecurity expertise and certifications
+- Application security services
 - TamperTantrum Labs business
+- Personal journey (mom of 3, career change)
+- Technical skills (Burp Suite, OWASP ZAP, etc.)
+- CTF challenges and hints
 
-## Customizing the Dataset
+## 📞 Support
 
-To add more conversations:
+For questions about Brenda's services:
+- Email: hensley.brenda@protonmail.com
+- Website: https://tampertantrumlabs.com
 
-```python
-from dataset_manager import PortfolioDatasetManager
+---
 
-manager = PortfolioDatasetManager()
-manager.add_conversation("category", "Question?", "Answer response")
-manager.save_dataset()
-```
-
-## Files Overview
-
-- `portfolio_dataset.json` - Main conversation dataset
-- `dataset_manager.py` - Tools for managing the dataset
-- `ollama_chatbot.py` - Main chatbot with Ollama integration
-- `setup_ollama.py` - Automatic setup script
-- `portfolio_trainer.py` - For training custom models (alternative to Ollama)
-
-## Testing
-
-Test the setup:
-```bash
+Built with ❤️ for cybersecurity professionals and potential clients.
 python setup_ollama.py test
 ```
 

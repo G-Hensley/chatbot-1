@@ -1,36 +1,15 @@
-# Tell Railway to ignore heavy files and use Nixpacks instead of Docker
+# Tell Railway to ignore these files during deployment
 
-# Ignore Docker files (Railway will use Nixpacks)
-Dockerfile
-Dockerfile.railway
-docker-compose.yml
-
-# Ignore development files
-test_*
-*_test.py
-quick_test.py
-
-# Ignore local environment files
+# Local development files
+venv/
 .env
 .env.local
 
-# Ignore documentation that's not needed for deployment
-*.md
-README.md
-RAILWAY_DEPLOYMENT.md
-WEB_DEPLOYMENT_GUIDE.md
-CTF_IMPLEMENTATION_GUIDE.md
-PROJECT_COMPLETE.md
-
-# Ignore demo files
-chat_demo.html
-intersect-sdk.js
-
-# Ignore git files
+# Git files
 .git/
 .gitignore
 
-# Ignore Python cache
+# Python cache
 __pycache__/
 *.pyc
 *.pyo
@@ -38,12 +17,12 @@ __pycache__/
 .Python
 *.so
 
-# Ignore IDE files
+# IDE files
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# Ignore OS files
+# OS files
 .DS_Store
 Thumbs.db
