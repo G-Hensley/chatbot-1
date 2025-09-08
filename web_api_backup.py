@@ -220,7 +220,7 @@ async def root():
             "description": "Brenda Hensley's AI knowledge database",
             "version": "1.0.0",
             "status": "⚠️ OLLAMA NOT CONFIGURED",
-            "setup_required": "Please set GROQ_API_KEY environment variable and ensure Groq is running",
+            "setup_required": "Please set OLLAMA_URL environment variable and ensure Ollama is running",
             "endpoints": {
                 "health": "/api/v1/health",
                 "setup": "/api/v1/setup",
@@ -246,17 +246,17 @@ async def root():
 
 @app.get("/api/v1/setup")
 async def setup_instructions():
-    """Provide setup instructions for configuring Groq."""
+    """Provide setup instructions for configuring Ollama."""
     global chatbot
     
-    ollama_url = os.getenv("GROQ_API_KEY", "not_set")
-    ollama_model = os.getenv("GROQ_MODEL", "llama3.1")
+    ollama_url = os.getenv("OLLAMA_URL", "not_set")
+    ollama_model = os.getenv("OLLAMA_MODEL", "llama3.1")
     
     setup_info = {
         "title": "🚀 The Intersect API Setup Instructions",
         "current_config": {
-            "GROQ_API_KEY": ollama_url,
-            "GROQ_MODEL": ollama_model,
+            "OLLAMA_URL": ollama_url,
+            "OLLAMA_MODEL": ollama_model,
             "chatbot_initialized": chatbot is not None
         },
         "steps": [
@@ -264,24 +264,24 @@ async def setup_instructions():
                 "step": 1,
                 "title": "Set Environment Variables in Railway",
                 "variables": {
-                    "GROQ_API_KEY": "https://your-ollama-instance.railway.app (or external URL)",
-                    "GROQ_MODEL": "llama3.1",
+                    "OLLAMA_URL": "https://your-ollama-instance.railway.app (or external URL)",
+                    "OLLAMA_MODEL": "llama3.1",
                     "INTERSECT_API_KEY": "your-secure-api-key",
                     "ALLOWED_ORIGINS": "https://tampertantrumlabs.com"
                 }
             },
             {
                 "step": 2, 
-                "title": "Deploy Groq Service",
+                "title": "Deploy Ollama Service",
                 "options": [
                     "Option A: Create new Railway service with ollama/ollama:latest image",
-                    "Option B: Use external Groq server (DigitalOcean, AWS, etc.)",
-                    "Option C: Use local Groq for development"
+                    "Option B: Use external Ollama server (DigitalOcean, AWS, etc.)",
+                    "Option C: Use local Ollama for development"
                 ]
             },
             {
                 "step": 3,
-                "title": "Pull Model in Groq",
+                "title": "Pull Model in Ollama",
                 "command": f"ollama pull {ollama_model}"
             },
             {
@@ -308,17 +308,17 @@ async def setup_instructions():
 
 @app.get("/api/v1/setup")
 async def setup_instructions():
-    """Provide setup instructions for configuring Groq."""
+    """Provide setup instructions for configuring Ollama."""
     global chatbot
     
-    ollama_url = os.getenv("GROQ_API_KEY", "not_set")
-    ollama_model = os.getenv("GROQ_MODEL", "llama3.1")
+    ollama_url = os.getenv("OLLAMA_URL", "not_set")
+    ollama_model = os.getenv("OLLAMA_MODEL", "llama3.1")
     
     setup_info = {
         "title": "🚀 The Intersect API Setup Instructions",
         "current_config": {
-            "GROQ_API_KEY": ollama_url,
-            "GROQ_MODEL": ollama_model,
+            "OLLAMA_URL": ollama_url,
+            "OLLAMA_MODEL": ollama_model,
             "chatbot_initialized": chatbot is not None
         },
         "steps": [
@@ -326,24 +326,24 @@ async def setup_instructions():
                 "step": 1,
                 "title": "Set Environment Variables in Railway",
                 "variables": {
-                    "GROQ_API_KEY": "https://your-ollama-instance.railway.app (or external URL)",
-                    "GROQ_MODEL": "llama3.1",
+                    "OLLAMA_URL": "https://your-ollama-instance.railway.app (or external URL)",
+                    "OLLAMA_MODEL": "llama3.1",
                     "INTERSECT_API_KEY": "your-secure-api-key",
                     "ALLOWED_ORIGINS": "https://tampertantrumlabs.com"
                 }
             },
             {
                 "step": 2, 
-                "title": "Deploy Groq Service",
+                "title": "Deploy Ollama Service",
                 "options": [
                     "Option A: Create new Railway service with ollama/ollama:latest image",
-                    "Option B: Use external Groq server (DigitalOcean, AWS, etc.)",
-                    "Option C: Use local Groq for development"
+                    "Option B: Use external Ollama server (DigitalOcean, AWS, etc.)",
+                    "Option C: Use local Ollama for development"
                 ]
             },
             {
                 "step": 3,
-                "title": "Pull Model in Groq",
+                "title": "Pull Model in Ollama",
                 "command": f"ollama pull {ollama_model}"
             },
             {
