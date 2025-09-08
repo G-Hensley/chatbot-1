@@ -19,7 +19,7 @@ class GroqPortfolioChatbot:
         
         if not api_key:
             # Don't raise exception - let the app start and handle gracefully
-            print("No GROQ_API_KEY found, initializing in degraded mode")
+            print("ERROR: No GROQ_API_KEY found, initializing in degraded mode")
             self.client = None
             self.api_key_missing = True
             self.dataset_manager = PortfolioDatasetManager()
@@ -28,6 +28,8 @@ class GroqPortfolioChatbot:
         
         try:
             print("Creating Groq client...")
+            print(f"API key length: {len(api_key) if api_key else 0}")
+            print(f"Groq import successful: {Groq}")
             self.client = Groq(api_key=api_key)
             self.api_key_missing = False
             self.dataset_manager = PortfolioDatasetManager()
@@ -36,6 +38,9 @@ class GroqPortfolioChatbot:
         except Exception as e:
             # If Groq client creation fails, set to None and handle gracefully
             print(f"Failed to create Groq client: {str(e)}")
+            print(f"Exception type: {type(e)}")
+            import traceback
+            print(f"Full traceback: {traceback.format_exc()}")
             self.client = None
             self.api_key_missing = True
             self.dataset_manager = PortfolioDatasetManager()
