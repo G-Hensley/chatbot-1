@@ -25,8 +25,12 @@ logger = logging.getLogger(__name__)
 
 # Security configurations
 API_KEY = os.getenv("INTERSECT_API_KEY", "your-super-secret-api-key-change-this")
-RATE_LIMIT_REQUESTS = 10  # requests per minute per IP
-RATE_LIMIT_WINDOW = 60   # seconds
+RATE_LIMIT_REQUESTS = int(os.getenv("RATE_LIMIT_REQUESTS", "10"))  # requests per minute per IP
+RATE_LIMIT_WINDOW = int(os.getenv("RATE_LIMIT_WINDOW", "60"))     # seconds
+
+# Railway environment detection
+IS_RAILWAY = os.getenv("RAILWAY_ENVIRONMENT") == "production"
+PORT = int(os.getenv("PORT", "8000"))
 
 # Rate limiting storage
 rate_limit_storage = defaultdict(lambda: deque())
@@ -71,15 +75,17 @@ app = FastAPI(
 )
 
 # CORS middleware for website integration
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "").split(",") if os.getenv("ALLOWED_ORIGINS") else [
+    "http://localhost:3000",  # React dev server
+    "http://localhost:8080",  # Vue dev server
+    "https://tampertantrumlabs.com",  # Your production domain
+    "https://www.tampertantrumlabs.com",  # www version
+    # Add your actual domain here
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",  # React dev server
-        "http://localhost:8080",  # Vue dev server
-        "https://tampertantrumlabs.com",  # Your production domain
-        "https://www.tampertantrumlabs.com",  # www version
-        # Add your actual domain here
-    ],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
@@ -316,15 +322,23 @@ async def general_exception_handler(request: Request, exc: Exception):
 if __name__ == "__main__":
     import uvicorn
     
+    # Use Railway's port or default to 8000
+    port = int(os.getenv("PORT", "8000"))
+    host = "0.0.0.0"
+    
     print("🤖 Starting The Intersect API Server...")
-    print("📚 API Documentation available at: http://localhost:8000/docs")
-    print("🔗 Health check: http://localhost:8000/api/v1/health")
-    print("💬 Chat endpoint: POST http://localhost:8000/api/v1/chat")
+    print(f"📚 API Documentation available at: http://localhost:{port}/docs")
+    print(f"🔗 Health check: http://localhost:{port}/api/v1/health")
+    print(f"💬 Chat endpoint: POST http://localhost:{port}/api/v1/chat")
+    
+    if IS_RAILWAY:
+        print("🚂 Running on Railway!")
+        print(f"🌐 CORS origins: {ALLOWED_ORIGINS}")
     
     uvicorn.run(
         "web_api:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
+        host=host,
+        port=port,
+        reload=not IS_RAILWAY,  # Disable reload in production
         log_level="info"
     )
