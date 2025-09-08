@@ -265,6 +265,71 @@ async def setup_instructions():
     
     return setup_info
 
+        }
+    }
+
+@app.get("/api/v1/setup")
+async def setup_instructions():
+    """Provide setup instructions for configuring Ollama."""
+    global chatbot
+    
+    ollama_url = os.getenv("OLLAMA_URL", "not_set")
+    ollama_model = os.getenv("OLLAMA_MODEL", "llama3.1")
+    
+    setup_info = {
+        "title": "🚀 The Intersect API Setup Instructions",
+        "current_config": {
+            "OLLAMA_URL": ollama_url,
+            "OLLAMA_MODEL": ollama_model,
+            "chatbot_initialized": chatbot is not None
+        },
+        "steps": [
+            {
+                "step": 1,
+                "title": "Set Environment Variables in Railway",
+                "variables": {
+                    "OLLAMA_URL": "https://your-ollama-instance.railway.app (or external URL)",
+                    "OLLAMA_MODEL": "llama3.1",
+                    "INTERSECT_API_KEY": "your-secure-api-key",
+                    "ALLOWED_ORIGINS": "https://tampertantrumlabs.com"
+                }
+            },
+            {
+                "step": 2, 
+                "title": "Deploy Ollama Service",
+                "options": [
+                    "Option A: Create new Railway service with ollama/ollama:latest image",
+                    "Option B: Use external Ollama server (DigitalOcean, AWS, etc.)",
+                    "Option C: Use local Ollama for development"
+                ]
+            },
+            {
+                "step": 3,
+                "title": "Pull Model in Ollama",
+                "command": f"ollama pull {ollama_model}"
+            },
+            {
+                "step": 4,
+                "title": "Restart Railway Service",
+                "note": "After setting environment variables, redeploy this service"
+            }
+        ],
+        "test_endpoints": {
+            "health": "/api/v1/health",
+            "documentation": "/docs"
+        }
+    }
+    
+    if chatbot:
+        connected, message = chatbot.check_ollama_connection()
+        setup_info["connection_test"] = {
+            "connected": connected,
+            "message": message,
+            "status": "✅ Ready!" if connected else f"❌ {message}"
+        }
+    
+    return setup_info
+
 @app.get("/api/v1/health", response_model=HealthResponse)
 async def health_check():
     """Health check endpoint."""

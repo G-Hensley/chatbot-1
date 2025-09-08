@@ -1,0 +1,43 @@
+# All-in-One Dockerfile for Railway
+# Includes both FastAPI and Ollama in one container
+
+FROM ollama/ollama:latest
+
+# Install Python and pip
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy Python requirements and install
+COPY requirements.txt .
+RUN pip3 install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY . .
+
+# Create startup script that runs both Ollama and FastAPI
+RUN echo '#!/bin/bash\n\
+# Start Ollama in background\n\
+ollama serve &\n\
+\n\
+# Wait for Ollama to be ready\n\
+echo "Waiting for Ollama to start..."\n\
+sleep 10\n\
+\n\
+# Pull the model\n\
+ollama pull llama3.1\n\
+\n\
+# Start FastAPI\n\
+exec uvicorn web_api:app --host 0.0.0.0 --port ${PORT:-8000}\n\
+' > /app/start.sh && chmod +x /app/start.sh
+
+# Expose port
+EXPOSE $PORT
+
+# Use the startup script
+CMD ["/app/start.sh"]

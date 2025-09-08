@@ -6,11 +6,22 @@ This script creates a simple chatbot using Ollama with Brenda's portfolio inform
 import json
 import requests
 import sys
+import os
 from dataset_manager import PortfolioDatasetManager
 
 class OllamaPortfolioChatbot:
-    def __init__(self, model_name="llama3.1", ollama_url="http://localhost:11434"):
+    def __init__(self, model_name="llama3.1", ollama_url=None):
         self.model_name = model_name
+        
+        # Smart URL detection
+        if ollama_url is None:
+            # Check environment variable first
+            ollama_url = os.getenv("OLLAMA_URL")
+            
+            # If not set, default to localhost (for all-in-one deployment)
+            if not ollama_url:
+                ollama_url = "http://localhost:11434"
+        
         self.ollama_url = ollama_url
         self.dataset_manager = PortfolioDatasetManager()
         self.system_prompt = self.create_system_prompt()
