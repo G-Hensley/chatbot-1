@@ -56,7 +56,7 @@ INSTRUCTIONS:
     def check_ollama_connection(self):
         """Check if Ollama is running and the model is available."""
         try:
-            response = requests.get(f"{self.ollama_url}/api/tags")
+            response = requests.get(f"{self.ollama_url}/api/tags", timeout=10)
             if response.status_code == 200:
                 models = response.json().get("models", [])
                 model_names = [model["name"] for model in models]
@@ -66,6 +66,8 @@ INSTRUCTIONS:
                     return False, f"Model '{self.model_name}' not found. Available models: {model_names}"
             else:
                 return False, f"Ollama not responding (status: {response.status_code})"
+        except requests.exceptions.Timeout:
+            return False, "Ollama connection timed out (server may be overloaded)"
         except requests.exceptions.ConnectionError:
             return False, "Cannot connect to Ollama. Make sure it's running on http://localhost:11434"
         except Exception as e:
@@ -94,7 +96,8 @@ INSTRUCTIONS:
                     "model": self.model_name,
                     "messages": messages,
                     "stream": False
-                }
+                },
+                timeout=30  # 30 second timeout to prevent freezing
             )
             
             if response.status_code == 200:

@@ -12,6 +12,7 @@ from typing import Optional, List
 import time
 import hashlib
 import os
+import requests
 from collections import defaultdict, deque
 import asyncio
 from contextlib import asynccontextmanager
@@ -472,11 +473,29 @@ async def chat_endpoint(
             processing_time=processing_time
         )
         
+    except requests.exceptions.Timeout:
+        logger.warning(f"Ollama request timed out for IP: {client_request.client.host}")
+        # Return fallback response on timeout
+        fallback_response = get_fallback_response(request.message)
+        processing_time = time.time() - start_time
+        
+        return ChatResponse(
+            response=fallback_response + "\n\n⚠️ Note: AI response timed out, providing basic information instead.",
+            conversation_id=request.conversation_id or "timeout_fallback",
+            timestamp=time.time(),
+            processing_time=processing_time
+        )
     except Exception as e:
         logger.error(f"Error processing chat request: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error processing request: {str(e)}"
+        # Also provide fallback for other errors
+        fallback_response = get_fallback_response(request.message)
+        processing_time = time.time() - start_time
+        
+        return ChatResponse(
+            response=fallback_response + f"\n\n⚠️ Technical issue encountered: {str(e)[:100]}...",
+            conversation_id=request.conversation_id or "error_fallback",
+            timestamp=time.time(),
+            processing_time=processing_time
         )
 
 @app.delete("/api/v1/chat/{conversation_id}")
