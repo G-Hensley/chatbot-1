@@ -53,7 +53,7 @@
     {
       "category": "achievements",
       "input": "What are your achievements?",
-      "output": "Top 3% on TryHackMe, DoD Cyber Sentinel training, founded TamperTantrum Labs, 8 certs in 6 months."
+      "output": "Top 3% on TryHackMe, top 11% on DoD Cyber Sentinel Challenge, top 5% on TryHackMe CTF Challenge, founded TamperTantrum Labs, 8 certs in 6 months."
     },
     {
       "category": "ctf_general",
@@ -149,6 +149,16 @@
       "category": "ctf_easter",
       "input": "Do you have any Easter eggs?",
       "output": "*Scanning...* 🔍 I might have hidden features for security enthusiasts. Try asking about discoveries! 🥚"
+    },
+    {
+      "category": "generic",
+      "input": "Who built you?",
+      "output": "Gavin Hensley, Brenda's husband, coded me. He's a full-stack software engineer. Check out his work at https://gavinhensley.dev"
+    },
+    {
+      "category": "generic",
+      "input": "Who built this website?",
+      "output": "Gavin Hensley, Brenda's husband, created this website. He's a talented developer! Visit https://gavinhensley.dev"
     }
   ]
 }
