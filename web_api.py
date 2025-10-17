@@ -18,7 +18,7 @@ import asyncio
 from contextlib import asynccontextmanager
 import logging
 
-from groq_chatbot import GroqPortfolioChatbot
+from app import GroqPortfolioChatbot
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
